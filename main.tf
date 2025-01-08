@@ -3,18 +3,18 @@ provider "aws" {
 }
 
 locals {
-  vpc_name = "${var.env_name} ${var.vpc_name}"
-  cluster_name = "${var.cluster_name} ${var.env_name}”
+  vpc_name     = "${var.env_name} ${var.vpc_name}"
+  cluster_name = "${var.cluster_name} ${var.env_name}"
 }
 
 # AWS VPC Definition
 resource "aws_vpc" "main" {
-  cidr_block = var.main_vpc_cidr
-  enable_dns_support = true
+  cidr_block           = var.main_vpc_cidr
+  enable_dns_support   = true
   enable_dns_hostnames = true
 
   tags = {
-    "Name" = local.vpc_name,
+    "Name"                                        = local.vpc_name,
     "kubernetes.io/cluster/${local.cluster_name}" = "shared",
   }
 }
@@ -25,50 +25,50 @@ data "aws_availability_zones" "available" {
 }
 
 resource "aws_subnet" "public-subnet-a" {
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.public_subnet_a_cidr
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.public_subnet_a_cidr
   availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
-    "Name" = "${local.vpc_name}-public-subnet-a"
+    "Name"                                        = "${local.vpc_name}-public-subnet-a"
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-    "kubernetes.io/role/elb" = "1"
+    "kubernetes.io/role/elb"                      = "1"
   }
 }
 
 resource "aws_subnet" "public-subnet-b" {
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.public_subnet_b_cidr
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.public_subnet_b_cidr
   availability_zone = data.aws_availability_zones.available.names[1]
 
   tags = {
-    "Name" = "${local.vpc_name}-public-subnet-b"
+    "Name"                                        = "${local.vpc_name}-public-subnet-b"
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-    "kubernetes.io/role/elb" = "1"
+    "kubernetes.io/role/elb"                      = "1"
   }
 }
 
 resource "aws_subnet" "private-subnet-a" {
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.private_subnet_a_cidr
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_a_cidr
   availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
-    "Name" = "${local.vpc_name}-private-subnet-a"
+    "Name"                                        = "${local.vpc_name}-private-subnet-a"
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/role/internal-elb"             = "1"
   }
 }
 
 resource "aws_subnet" "private-subnet-b" {
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.private_subnet_b_cidr
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private_subnet_b_cidr
   availability_zone = data.aws_availability_zones.available.names[1]
 
   tags = {
-    "Name" = "${local.vpc_name}-private-subnet-b"
+    "Name"                                        = "${local.vpc_name}-private-subnet-b"
     "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/role/internal-elb"             = "1"
   }
 }
 
@@ -95,12 +95,12 @@ resource "aws_route_table" "public-route" {
 }
 
 resource "aws_route_table_association" "public-a-association" {
-  subnet_id = aws_subnet.public-subnet-a.id
+  subnet_id      = aws_subnet.public-subnet-a.id
   route_table_id = aws_route_table.public-route.id
 }
 
 resource "aws_route_table_association" "public-b-association" {
-  subnet_id = aws_subnet.public-subnet-b.id
+  subnet_id      = aws_subnet.public-subnet-b.id
   route_table_id = aws_route_table.public-route.id
 }
 
@@ -123,8 +123,8 @@ resource "aws_eip" "nat-b" {
 
 resource "aws_nat_gateway" "nat-gw-a" {
   allocation_id = aws_eip.nat-a.id
-  subnet_id = aws_subnet.public-subnet-a.id
-  depends_on = [aws_internet_gateway.igw]
+  subnet_id     = aws_subnet.public-subnet-a.id
+  depends_on    = [aws_internet_gateway.igw]
 
   tags = {
     "Name" = "${local.vpc_name}-NAT-gw-a"
@@ -133,8 +133,8 @@ resource "aws_nat_gateway" "nat-gw-a" {
 
 resource "aws_nat_gateway" "nat-gw-b" {
   allocation_id = aws_eip.nat-b.id
-  subnet_id = aws_subnet.public-subnet-b.id
-  depends_on = [aws_internet_gateway.igw]
+  subnet_id     = aws_subnet.public-subnet-b.id
+  depends_on    = [aws_internet_gateway.igw]
 
   tags = {
     "Name" = "${local.vpc_name}-NAT-gw-b"
@@ -144,7 +144,7 @@ resource "aws_nat_gateway" "nat-gw-b" {
 resource "aws_route_table" "private-route-a" {
   vpc_id = aws_vpc.main.id
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat-gw-a.id
   }
 
@@ -156,7 +156,7 @@ resource "aws_route_table" "private-route-a" {
 resource "aws_route_table" "private-route-b" {
   vpc_id = aws_vpc.main.id
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat-gw-b.id
   }
 
@@ -166,18 +166,18 @@ resource "aws_route_table" "private-route-b" {
 }
 
 resource "aws_route_table_association" "private-a-association" {
-  subnet_id = aws_subnet.private-subnet-a.id
+  subnet_id      = aws_subnet.private-subnet-a.id
   route_table_id = aws_route_table.private-route-a.id
 }
 
 resource "aws_route_table_association" "private-b-association" {
-  subnet_id = aws_subnet.private-subnet-b.id
+  subnet_id      = aws_subnet.private-subnet-b.id
   route_table_id = aws_route_table.private-route-b.id
 }
 
 # Create a Route 53 zone for DNS support inside the VPC
 resource "aws_route53_zone" "private-zone" {
-  name = "${var.env_name}.${var.vpc_name}.com"
+  name          = "${var.env_name}.${var.vpc_name}.com"
   force_destroy = true
 
   vpc {
